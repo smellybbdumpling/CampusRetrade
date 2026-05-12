@@ -326,3 +326,7 @@ mvn test
 6. 补充 Docker Compose 一键启动环境
 7. 为订单增加超时关闭、售后等扩展状态
 8. 为举报和留言补充敏感词过滤、频率限制和更完整的风控策略
+
+## 许可证 📄
+
+本项目采用 MIT License，详情见 [LICENSE](LICENSE)。
