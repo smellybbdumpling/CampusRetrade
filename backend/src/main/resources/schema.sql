@@ -1,0 +1,199 @@
+CREATE TABLE IF NOT EXISTS sys_user (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    nickname VARCHAR(50) NOT NULL,
+    avatar VARCHAR(255),
+    phone VARCHAR(20),
+    gender VARCHAR(20),
+    bio VARCHAR(500),
+    school VARCHAR(100),
+    college VARCHAR(100),
+    major VARCHAR(100),
+    grade VARCHAR(50),
+    wechat VARCHAR(50),
+    qq VARCHAR(30),
+    email VARCHAR(100),
+    trade_location VARCHAR(100),
+    trade_methods VARCHAR(100),
+    accept_bargain TINYINT NOT NULL DEFAULT 1,
+    online_time VARCHAR(100),
+    phone_public TINYINT NOT NULL DEFAULT 0,
+    wechat_public TINYINT NOT NULL DEFAULT 0,
+    role VARCHAR(20) NOT NULL DEFAULT 'USER',
+    status VARCHAR(20) NOT NULL DEFAULT 'NORMAL',
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS category (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS goods (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    seller_id BIGINT NOT NULL,
+    category_id BIGINT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    description VARCHAR(500),
+    cover_image VARCHAR(255),
+    status VARCHAR(20) NOT NULL DEFAULT 'ON_SALE',
+    stock INT NOT NULL DEFAULT 1,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goods_user FOREIGN KEY (seller_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_goods_category FOREIGN KEY (category_id) REFERENCES category(id)
+);
+
+CREATE TABLE IF NOT EXISTS goods_image (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    goods_id BIGINT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goods_image_goods FOREIGN KEY (goods_id) REFERENCES goods(id)
+);
+
+CREATE TABLE IF NOT EXISTS goods_audit_log (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    goods_id BIGINT NOT NULL,
+    admin_id BIGINT NOT NULL,
+    audit_status VARCHAR(20) NOT NULL,
+    audit_remark VARCHAR(255),
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goods_audit_goods FOREIGN KEY (goods_id) REFERENCES goods(id),
+    CONSTRAINT fk_goods_audit_admin FOREIGN KEY (admin_id) REFERENCES sys_user(id)
+);
+
+CREATE TABLE IF NOT EXISTS featured_category (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ENABLED',
+    sort_order INT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS goods_featured_category (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    goods_id BIGINT NOT NULL,
+    featured_category_id BIGINT NOT NULL,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_goods_featured (goods_id, featured_category_id),
+    CONSTRAINT fk_goods_featured_goods FOREIGN KEY (goods_id) REFERENCES goods(id),
+    CONSTRAINT fk_goods_featured_category FOREIGN KEY (featured_category_id) REFERENCES featured_category(id)
+);
+
+CREATE TABLE IF NOT EXISTS cart_item (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    goods_id BIGINT NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_user_goods (user_id, goods_id),
+    CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_cart_goods FOREIGN KEY (goods_id) REFERENCES goods(id)
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_no VARCHAR(32) NOT NULL UNIQUE,
+    buyer_id BIGINT NOT NULL,
+    seller_id BIGINT NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'CREATED',
+    remark VARCHAR(255),
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_orders_user FOREIGN KEY (buyer_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_orders_seller FOREIGN KEY (seller_id) REFERENCES sys_user(id)
+);
+
+CREATE TABLE IF NOT EXISTS order_item (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    goods_id BIGINT NOT NULL,
+    goods_title VARCHAR(100) NOT NULL,
+    goods_price DECIMAL(10,2) NOT NULL,
+    quantity INT NOT NULL DEFAULT 1,
+    subtotal_amount DECIMAL(10,2) NOT NULL,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_order_item_order FOREIGN KEY (order_id) REFERENCES orders(id),
+    CONSTRAINT fk_order_item_goods FOREIGN KEY (goods_id) REFERENCES goods(id)
+);
+
+CREATE TABLE IF NOT EXISTS favorite_goods (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    goods_id BIGINT NOT NULL,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_favorite_user_goods (user_id, goods_id),
+    CONSTRAINT fk_favorite_user FOREIGN KEY (user_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_favorite_goods FOREIGN KEY (goods_id) REFERENCES goods(id)
+);
+
+CREATE TABLE IF NOT EXISTS goods_message (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    goods_id BIGINT NOT NULL,
+    sender_id BIGINT NOT NULL,
+    parent_id BIGINT,
+    content VARCHAR(500) NOT NULL,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goods_message_goods FOREIGN KEY (goods_id) REFERENCES goods(id),
+    CONSTRAINT fk_goods_message_sender FOREIGN KEY (sender_id) REFERENCES sys_user(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_notification (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    type VARCHAR(30) NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    content VARCHAR(255) NOT NULL,
+    action_url VARCHAR(255),
+    read_flag TINYINT NOT NULL DEFAULT 0,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_user_notification_user FOREIGN KEY (user_id) REFERENCES sys_user(id)
+);
+
+CREATE TABLE IF NOT EXISTS goods_report (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    goods_id BIGINT NOT NULL,
+    reporter_id BIGINT NOT NULL,
+    reported_user_id BIGINT NOT NULL,
+    report_type VARCHAR(30) NOT NULL,
+    report_reason VARCHAR(100) NOT NULL,
+    report_description VARCHAR(500),
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    handle_result VARCHAR(30),
+    handle_remark VARCHAR(255),
+    handler_id BIGINT,
+    handle_time DATETIME,
+    deleted TINYINT NOT NULL DEFAULT 0,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_goods_report_goods FOREIGN KEY (goods_id) REFERENCES goods(id),
+    CONSTRAINT fk_goods_report_reporter FOREIGN KEY (reporter_id) REFERENCES sys_user(id),
+    CONSTRAINT fk_goods_report_reported_user FOREIGN KEY (reported_user_id) REFERENCES sys_user(id)
+);

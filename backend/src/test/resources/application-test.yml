@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:campus_trade_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  sql:
+    init:
+      mode: always
+      encoding: UTF-8
+
+mybatis-plus:
+  configuration:
+    log-impl:
+
+jwt:
+  secret: your_jwt_secret_key
+  expire-hours: 72
+
+file:
+  upload-dir: uploads-test
+  access-path: /uploads/**
